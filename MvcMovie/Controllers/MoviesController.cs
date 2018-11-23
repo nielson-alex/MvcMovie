@@ -25,32 +25,51 @@ namespace MvcMovie.Controllers
         //    return "From [HttpPost]Index: filter on " + searchString;
         //}
 
-        public async Task<IActionResult> Index(string movieGenre, string searchString)
+        public async Task<IActionResult> Index(DateTime movieReleaseDate, string movieGenre, string searchString)
         {
             // Use LINQ to get list of genres.
             IQueryable<string> genreQuery = from m in _context.Movie
                                             orderby m.Genre
                                             select m.Genre;
 
-            var movies = from m in _context.Movie
+            IQueryable<string> releaseDateQuery = from m in _context.Movie
+                                                    orderby m.ReleaseDate.ToString("yyyy-MM-dd")
+                                                    select m.ReleaseDate.ToString("yyyy-MM-dd");
+
+            var movies1 = from m in _context.Movie
                          select m;
 
             if (!String.IsNullOrEmpty(searchString))
             {
-                movies = movies.Where(s => s.Title.Contains(searchString));
+                movies1 = movies1.Where(s => s.Title.Contains(searchString));
             }
 
             if (!String.IsNullOrEmpty(movieGenre))
             {
-                movies = movies.Where(x => x.Genre == movieGenre);
+                movies1 = movies1.Where(x => x.Genre == movieGenre);
             }
 
             var movieGenreVM = new MovieGenreViewModel();
             movieGenreVM.Genres = new SelectList(await genreQuery.Distinct().ToListAsync());
-            movieGenreVM.Movies = await movies.ToListAsync();
+            movieGenreVM.Movies = await movies1.ToListAsync();
             movieGenreVM.SearchString = searchString;
 
-            return View(movieGenreVM);
+            var movies2 = from m in _context.Movie
+                          select m;
+
+            if (!String.IsNullOrEmpty(movieReleaseDate.ToString("yyyy-MM-dd")))
+            {
+                movies2 = movies2.Where(x => x.ReleaseDate == movieReleaseDate.Date);
+            }
+
+            var movieReleaseDateVM = new MovieGenreViewModel();
+            movieReleaseDateVM.ReleaseDates = new SelectList(await releaseDateQuery.Distinct().ToListAsync());
+            movieReleaseDateVM.Movies = await movies2.ToListAsync();
+            movieReleaseDateVM.SearchString = searchString;
+
+            movies2 = movies2.Where(x => x.ReleaseDate == movieReleaseDate);
+
+            return View(movieReleaseDateVM);
         }
 
         // GET: Movies/Details/5

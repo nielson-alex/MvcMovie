@@ -1,16 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
-using System;
 using System.Collections.Generic;
 
 namespace MvcMovie.Models
 {
-    public class MovieGenreViewModel
+    public class MovieReleaseDateViewModel
     {
         public List<Movie> Movies;
-        public SelectList Genres;
-        public string MovieGenre { get; set; }
         public SelectList ReleaseDates;
-        public DateTime MovieReleaseDate { get; set; }
+        public string MovieReleaseDate { get; set; }
         public string SearchString { get; set; }
     }
 }
