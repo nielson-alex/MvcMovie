@@ -1,10 +1,10 @@
 ﻿@model MvcMovie.Models.MovieGenreViewModel 
-
+<link href="~/css/site.css" rel="stylesheet" />
 @{
     ViewData["Title"] = "View Movies";
 }
 
-<h2>Index</h2>
+<h2>@ViewData["Title"]</h2>
 
 <p>
     <a asp-action="Create">Create New</a>
