@@ -11,6 +11,8 @@ namespace MvcMovie.Models
         public string MovieGenre { get; set; }
         public SelectList ReleaseDates;
         public DateTime MovieReleaseDate { get; set; }
+        public SelectList Ratings;
+        public string MovieRating { get; set; }
         public string SearchString { get; set; }
     }
 }

@@ -19,57 +19,99 @@ namespace MvcMovie.Controllers
         }
 
         // GET: Movies
-        //[HttpPost]
-        //public string Index(string searchString, bool notUsed)
-        //{
-        //    return "From [HttpPost]Index: filter on " + searchString;
-        //}
-
-        public async Task<IActionResult> Index(DateTime movieReleaseDate, string movieGenre, string searchString)
+        [HttpPost]
+        public string Index(string searchString, bool notUsed)
         {
+            return "From [HttpPost]Index: filter on " + searchString;
+        }
+
+        public async Task<IActionResult> Index(string movieGenre, DateTime movieReleaseDate, string movieRating, string searchString)
+        {
+            //IQueryable<string> genreQuery;
+            //// Use LINQ to get list of genres.
+            //if (!String.IsNullOrEmpty(ascending))
+            //{
+            //    genreQuery = from m in _context.Movie
+            //                 orderby m.Genre ascending
+            //                 select m.Genre;
+            //}
+            //else if (!String.IsNullOrEmpty(descending))
+            //{
+            //    genreQuery = from m in _context.Movie
+            //                 orderby m.Genre descending
+            //                 select m.Genre;
+            //}
+
             // Use LINQ to get list of genres.
             IQueryable<string> genreQuery = from m in _context.Movie
                                             orderby m.Genre
                                             select m.Genre;
 
             IQueryable<string> releaseDateQuery = from m in _context.Movie
-                                                    orderby m.ReleaseDate.ToString("yyyy-MM-dd")
-                                                    select m.ReleaseDate.ToString("yyyy-MM-dd");
+                                                  orderby m.ReleaseDate.ToString("yyyy-MM-dd")
+                                                  select m.ReleaseDate.ToString("yyyy-MM-dd");
 
-            var movies1 = from m in _context.Movie
+            IQueryable<string> ratingQuery = from m in _context.Movie
+                                                  orderby m.Rating
+                                                  select m.Rating;
+
+            var movies = from m in _context.Movie
                          select m;
 
             if (!String.IsNullOrEmpty(searchString))
             {
-                movies1 = movies1.Where(s => s.Title.Contains(searchString));
+                movies = movies.Where(s => s.Title.Contains(searchString));
             }
 
-            if (!String.IsNullOrEmpty(movieGenre))
+            // If the genre is not empty, release date not empty, and rating not empty
+            if (!(String.IsNullOrEmpty(movieGenre)) && movieReleaseDate != DateTime.MinValue && !(String.IsNullOrEmpty(movieRating)))
             {
-                movies1 = movies1.Where(x => x.Genre == movieGenre);
+                movies = movies.Where(x => x.Genre == movieGenre &&
+                                           Convert.ToDateTime(x.ReleaseDate.ToString("yyyy-MM-dd")) == Convert.ToDateTime(movieReleaseDate.ToString("yyyy-MM-dd")) &&
+                                           x.Rating == movieRating);
             }
-
-            var movieGenreVM = new MovieGenreViewModel();
-            movieGenreVM.Genres = new SelectList(await genreQuery.Distinct().ToListAsync());
-            movieGenreVM.Movies = await movies1.ToListAsync();
-            movieGenreVM.SearchString = searchString;
-
-            var movies2 = from m in _context.Movie
-                          select m;
-
-            if (!String.IsNullOrEmpty(movieReleaseDate.ToString("yyyy-MM-dd")))
+            // If the genre is not empty, release date not empty, but rating is empty
+            else if (!(String.IsNullOrEmpty(movieGenre)) && movieReleaseDate != DateTime.MinValue && String.IsNullOrEmpty(movieRating))
             {
-                movies2 = movies2.Where(x => x.ReleaseDate == movieReleaseDate.Date);
+                movies = movies.Where(x => x.Genre == movieGenre &&
+                                           Convert.ToDateTime(x.ReleaseDate.ToString("yyyy-MM-dd")) == Convert.ToDateTime(movieReleaseDate.ToString("yyyy-MM-dd")));
+            }
+            // If the genre is not empty, release date is empty, and rating is empty
+            else if (!(String.IsNullOrEmpty(movieGenre)) && movieReleaseDate == DateTime.MinValue && String.IsNullOrEmpty(movieRating))
+            {
+                movies = movies.Where(x => x.Genre == movieGenre);
+            }
+            // If the genre is empty, release date is not empty, and rating is not empty
+            else if (String.IsNullOrEmpty(movieGenre) && movieReleaseDate != DateTime.MinValue && !(String.IsNullOrEmpty(movieRating)))
+            {
+                movies = movies.Where(x => Convert.ToDateTime(x.ReleaseDate.ToString("yyyy-MM-dd")) == Convert.ToDateTime(movieReleaseDate.ToString("yyyy-MM-dd")) &&
+                                           x.Rating == movieRating);
+            }
+            // If the genre is empty, release date is not empty, and rating is empty
+            else if (String.IsNullOrEmpty(movieGenre) && movieReleaseDate != DateTime.MinValue && String.IsNullOrEmpty(movieRating))
+            {
+                movies = movies.Where(x => Convert.ToDateTime(x.ReleaseDate.ToString("yyyy-MM-dd")) == Convert.ToDateTime(movieReleaseDate.ToString("yyyy-MM-dd")));
+            }
+            // If the genre is not empty, release date is empty, and rating is not empty
+            else if (!(String.IsNullOrEmpty(movieGenre)) && movieReleaseDate == DateTime.MinValue && !(String.IsNullOrEmpty(movieRating)))
+            {
+                movies = movies.Where(x => x.Genre == movieGenre &&
+                                      x.Rating == movieRating);
+            }
+            // If the genre is empty, release date is empty, and rating is not empty
+            else if (String.IsNullOrEmpty(movieGenre) && movieReleaseDate == DateTime.MinValue && !(String.IsNullOrEmpty(movieRating)))
+            {
+                movies = movies.Where(x => x.Rating == movieRating);
             }
 
-            var movieReleaseDateVM = new MovieGenreViewModel();
-            movieReleaseDateVM.ReleaseDates = new SelectList(await releaseDateQuery.Distinct().ToListAsync());
-            movieReleaseDateVM.Movies = await movies2.ToListAsync();
-            movieReleaseDateVM.SearchString = searchString;
+            var movieVM = new MovieGenreViewModel();
+            movieVM.Genres = new SelectList(await genreQuery.Distinct().ToListAsync());
+            movieVM.ReleaseDates = new SelectList(await releaseDateQuery.Distinct().ToListAsync());
+            movieVM.Ratings = new SelectList(await ratingQuery.Distinct().ToListAsync());
+            movieVM.Movies = await movies.ToListAsync();
+            movieVM.SearchString = searchString;
 
-            movies2 = movies2.Where(x => x.ReleaseDate == movieReleaseDate);
-
-            return View(movieReleaseDateVM);
+            return View(movieVM);       
         }
 
         // GET: Movies/Details/5
